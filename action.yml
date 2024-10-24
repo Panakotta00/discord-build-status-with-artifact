@@ -1,0 +1,121 @@
+name: 'Discord Build Statis with Artifact'
+inputs:
+  artifact-name:
+    required: true
+  artifact-url:
+    required: true
+  webhook-url:
+    required: true
+    default: '${{ secrets.WEBHOOK_URL }}'
+  title:
+    required: true
+    default: '${{ github.ref_name }}'
+  username:
+    required: true
+    default: 'GitHub'
+  avatar-url:
+    required: true
+    default: 'https://cdn.discordapp.com/avatars/735904925900472323/df91181b3f1cf0ef1592fbe18e0962d7.webp?size=128'
+  success-msg:
+    required: true
+    default: 'Build Successful!'
+  success-color:
+    required: true
+    default: 65280
+  cancel-msg:
+    required: true
+    default: 'Build Cancelled!'
+  cancel-color:
+    required: true
+    default: 13158580
+  failed-msg:
+    required: true
+    default: 'Build Failed'
+  failed-color:
+    required: true
+    default: 16711680
+  unknown-msg:
+    required: true
+    default: 'Build Done!'
+  unknown-color:
+    required: true
+    default: 6579300
+runs:
+  using: "composite"
+  steps:
+      - name: Create Discord Webhook Action
+        uses: devops-actions/json-to-file@v1.0.4
+        if: success()
+        with:
+          filename: "discord-webhook.json"
+          json: >
+            {
+              "username": "${{ inputs.username }}",
+              "avatar_url": "${{ inputs.avatar-url }}",
+              "embeds": [{
+                "title": "${{ inputs.title }}",
+                "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+                "description": "${{ inputs.success-msg }}",
+                "color": ${{ inputs.success-color }},
+                "fields": [{
+                  "value": "[${{ inputs.artifact-name }}](${{ inputs.artifact-url }})",
+                  "name": "",
+                  "inline": true
+                }]
+              }]
+            }
+      - name: Create Discord Webhook Action
+        uses: devops-actions/json-to-file@v1.0.4
+        if: cancelled()
+        with:
+          filename: "discord-webhook.json"
+          json: >
+            {
+              "username": "${{ inputs.username }}",
+              "avatar_url": "${{ inputs.avatar-url }}",
+              "embeds": [{
+                "title": "${{ inputs.title }}",
+                "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+                "description": "${{ inputs.cancel-msg }}",
+                "color": ${{ inputs.cancel-color }}
+              }]
+            }
+      - name: Create Discord Webhook Action
+        uses: devops-actions/json-to-file@v1.0.4
+        if: failure()
+        with:
+          filename: "discord-webhook.json"
+          json: >
+            {
+              "username": "${{ inputs.username }}",
+              "avatar_url": "${{ inputs.avatar-url }}",
+              "embeds": [{
+                "title": "${{ inputs.title }}",
+                "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+                "description": "${{ inputs.failed-msg }}",
+                "color": ${{ inputs.failed-color }}
+              }]
+            }
+      - name: Create Discord Webhook Action
+        uses: devops-actions/json-to-file@v1.0.4
+        if: ${{ !success() && !failure() && !cancelled() }}
+        with:
+          filename: "discord-webhook.json"
+          json: >
+            {
+              "username": "${{ inputs.username }}",
+              "avatar_url": "${{ inputs.avatar-url }}",
+              "embeds": [{
+                "title": "${{ inputs.title }}",
+                "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+                "description": "${{ inputs.unknown-msg }}",
+                "color": ${{ inputs.unknown-color }}
+              }]
+            }
+
+      - name: Send Discord Webhook Action
+        uses: tsickert/discord-webhook@v6.0.0
+        if: always()
+        with:
+          webhook-url: ${{ inputs.webhook-url }}
+          raw-data: discord-webhook.json
