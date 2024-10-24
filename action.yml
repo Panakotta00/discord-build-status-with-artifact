@@ -6,7 +6,6 @@ inputs:
     required: true
   webhook-url:
     required: true
-    default: '${{ secrets.WEBHOOK_URL }}'
   title:
     required: true
     default: '${{ github.ref_name }}'
