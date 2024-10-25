@@ -1,5 +1,8 @@
 name: 'Discord Build Statis with Artifact'
 inputs:
+  status:
+    required: true
+    default: ${{ job.status }}
   artifact-name:
     required: true
   artifact-url:
@@ -15,27 +18,18 @@ inputs:
   avatar-url:
     required: true
     default: 'https://cdn.discordapp.com/avatars/735904925900472323/df91181b3f1cf0ef1592fbe18e0962d7.webp?size=128'
-  success:
-    required: true
-    default: false
   success-msg:
     required: true
     default: 'Build Successful!'
   success-color:
     required: true
     default: 65280
-  cancel:
-    required: true
-    default: ${{ cancelled }}
   cancel-msg:
     required: true
     default: 'Build Cancelled!'
   cancel-color:
     required: true
     default: 13158580
-  failed:
-    required: true
-    default: false
   failed-msg:
     required: true
     default: 'Build Failed'
@@ -53,7 +47,7 @@ runs:
   steps:
       - name: Create Discord Webhook Action
         uses: devops-actions/json-to-file@v1.0.4
-        if: ${{ inputs.success }}
+        if: ${{ inputs.status == 'success' }}
         with:
           filename: "discord-webhook.json"
           json: >
@@ -74,7 +68,7 @@ runs:
             }
       - name: Create Discord Webhook Action
         uses: devops-actions/json-to-file@v1.0.4
-        if: ${{ inputs.cancel }}
+        if: ${{ inputs.status == 'cancelled' }}
         with:
           filename: "discord-webhook.json"
           json: >
@@ -90,7 +84,7 @@ runs:
             }
       - name: Create Discord Webhook Action
         uses: devops-actions/json-to-file@v1.0.4
-        if: ${{ inputs.failed }}
+        if: ${{ inputs.status == 'failure' }}
         with:
           filename: "discord-webhook.json"
           json: >
@@ -106,7 +100,7 @@ runs:
             }
       - name: Create Discord Webhook Action
         uses: devops-actions/json-to-file@v1.0.4
-        if: ${{ !inputs.success && !inputs.failed && !inputs.cancel }}
+        if: ${{ inputs.status != 'success' && inputs.status != 'cancelled' && inputs.status != 'failure' }}
         with:
           filename: "discord-webhook.json"
           json: >
